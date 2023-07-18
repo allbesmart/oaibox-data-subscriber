@@ -8,20 +8,22 @@ This guide will tell you, **in detail**, everything you need to do to use the OA
 
 ## **0. Python Instalattion** 
 
-If you have python installed, skip this step. If you're unsure, you can check by running the following command in a terminal:
+If you have Python installed, skip this step. If you're unsure, you can check by running the following command in a terminal:
 ```python --version```.
 
 If you don't have Python, you can get it here: [Download Python](https://www.python.org/downloads/)
 
 ## **Note: Virtual Environment** 
 
-Using a virtual environment is not required but highly recommended. To create a virtual environment, run the following command:
+Using a virtual environment is not required but highly recommended. (Some IDEs and plugins generate virtual environments on their own).
 
-```python -m venv /path/to/virtual/environment``` _(You can create a new virtual environment inside the oaibox-data-subscriber directory)_
+To create a virtual environment, run the following command:
+
+```python -m venv /path/to/virtual/environment``` (You can create a new virtual environment inside the oaibox-data-subscriber directory).
 
 Once the virtual environment is setup, you need only to activate it. 
 
-If you're on Windows use the command: ```path/to/virtual/environment/Scripts/activate``` _(You might need to add .bat or .psl as the extension)_
+If you're on Windows use the command: ```path/to/virtual/environment/Scripts/activate``` (You might need to add .bat or .psl as the extension)
 
 If you're on MacOS or Linux use the command: ```source path/to/virtual/environment/bin/activate```
 
@@ -31,7 +33,7 @@ This can be done using an IDE (***1.1.***) or by running main.py in a terminal (
 
 &emsp;***1.1.*** IDEs will direct you to install the libs necessary to run this program once you run main.py.
 
-&emsp;***1.2.*** To run in a terminal, first you will need Python installed. (You can check what Python version you are currently running by running the command )
+&emsp;***1.2.*** To run in a terminal, there are a few extra steps.
 
 &emsp;***1.2.1.*** Before you run the script, a few dependencies need to be installed, first, navigate to the oaibox-data-subscriber directory, and then use the command ```pip install -r requirements.txt```.
 
