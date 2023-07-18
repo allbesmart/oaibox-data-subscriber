@@ -7,6 +7,7 @@ import logging
 
 VERSIONS = '1.0,1.1'
 
+
 class Client:
 
     def __init__(self, url):
@@ -27,7 +28,6 @@ class Client:
 
         self._connectCallback = None
         self.errorCallback = None
-        
 
     def _connect(self, timeout=0):
         thread = Thread(target=self.ws.run_forever)
@@ -40,23 +40,19 @@ class Client:
             total_ms += 250
             if 0 < timeout < total_ms:
                 raise TimeoutError(f"Connection to {self.url} timed out")
-            
+
         return self.opened
-            
 
     def _on_open(self, ws_app, *args):
         self.opened = True
-        
 
     def _on_close(self, ws_app, *args):
         self.connected = False
         logging.debug("Whoops! Lost connection to " + self.ws.url)
         self._clean_up()
-        
 
     def _on_error(self, ws_app, error, *args):
         logging.debug(error)
-        
 
     def _on_message(self, ws_app, message, *args):
         logging.debug("\n<<< " + str(message))
@@ -64,6 +60,8 @@ class Client:
         _results = []
         if frame.command == "CONNECTED":
             self.connected = True
+            print("Connected successfully!")
+            print("Getting data", end='')
             logging.debug("connected to server " + self.url)
             if self._connectCallback is not None:
                 _results.append(self._connectCallback(frame))
@@ -74,6 +72,7 @@ class Client:
             if subscription in self.subscriptions:
                 onreceive = self.subscriptions[subscription]
                 messageID = frame.headers['message-id']
+                print('.', end='')
 
                 def ack(headers):
                     if headers is None:
@@ -104,14 +103,12 @@ class Client:
             _results.append(info)
 
         return _results
-    
 
     def _transmit(self, command, headers, body=None):
         out = Frame.marshall(command, headers, body)
         logging.debug(command)
         logging.debug("\n>>> " + out)
         self.ws.send(out)
-        
 
     def connect(self, login=None, passcode=None, headers=None, connectCallback=None, errorCallback=None,
                 timeout=0):
@@ -134,7 +131,6 @@ class Client:
 
         self._transmit('CONNECT', headers)
         return is_connected
-        
 
     def disconnect(self, disconnectCallback=None, headers=None):
         if headers is None:
@@ -147,11 +143,9 @@ class Client:
 
         if disconnectCallback is not None:
             disconnectCallback()
-            
 
     def _clean_up(self):
         self.connected = False
-        
 
     def send(self, destination, headers=None, body=None):
         if headers is None:
@@ -160,7 +154,6 @@ class Client:
             body = ''
         headers['destination'] = destination
         return self._transmit("SEND", headers, body)
-    
 
     def subscribe(self, destination, callback=None, headers=None):
         if headers is None:
@@ -176,14 +169,12 @@ class Client:
             self.unsubscribe(headers["id"])
 
         return headers["id"], unsubscribe
-    
 
     def unsubscribe(self, id):
         del self.subscriptions[id]
         return self._transmit("UNSUBSCRIBE", {
             "id": id
         })
-        
 
     def ack(self, message_id, subscription, headers):
         if headers is None:
@@ -191,7 +182,6 @@ class Client:
         headers["message-id"] = message_id
         headers['subscription'] = subscription
         return self._transmit("ACK", headers)
-    
 
     def nack(self, message_id, subscription, headers):
         if headers is None:
@@ -199,5 +189,3 @@ class Client:
         headers["message-id"] = message_id
         headers['subscription'] = subscription
         return self._transmit("NACK", headers)
-    
-    
