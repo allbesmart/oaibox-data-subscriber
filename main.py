@@ -1,5 +1,3 @@
-import sys
-
 import maskpass
 import json
 import threading
@@ -46,7 +44,6 @@ class LivePlot(threading.Thread):
             sub_data: object of type SubscriberData
         """
         Thread.__init__(self)
-        self.daemon = True
 
         self.sub_data = sub_data
         self.fig = plt.figure()
@@ -78,13 +75,6 @@ class LivePlot(threading.Thread):
             plt.xticks(rotation=45, ha="right")
             plt.legend()
 
-    def quit(self):
-        """
-        Function to be called when the program is terminated, closes the plot window.
-        """
-        plt.clf()
-        plt.close(self.fig)
-
 
 class Subscriber(threading.Thread):
     """
@@ -105,7 +95,6 @@ class Subscriber(threading.Thread):
             sub_data: object of type SubscriberData
         """
         Thread.__init__(self)
-        self.daemon = True
 
         load_dotenv()
         self.access_token_url = os.environ['access_token_url']
@@ -163,7 +152,6 @@ class Subscriber(threading.Thread):
         Returns:
             list(dict()): list with all machines the user has access to, dict contains id and oaiboxType.
         """
-
         tenant_headers = {
             'Authorization': 'Bearer ' + token,
         }
@@ -176,26 +164,27 @@ class Subscriber(threading.Thread):
                 machine['clientDescription'] = tenant['clientDescription']
                 machines.append(machine)
                 i += 1
-
         return machines
 
     def subscription_callback(self, frame):
         """
+        Callback for the subscription to the stomp connection.
+
         Args:
             frame: object containing message output from the subscription to the message broker.
-
         """
         telem = json.loads(frame.body)
         self.sub_data.data.append(telem)
 
     def conn(self, token):
         """
+        Establishes stomp connection to the machine selected by the user.
+
         Args:
             token: object containing the authorization token.
 
         Returns:
             client: client object subscribed to the desired topic.
-
         """
 
         headers = {
@@ -213,9 +202,28 @@ class Subscriber(threading.Thread):
 
         return client
 
+    def select_machine(self, machine_list):
+        """
+        Prompts the console until the user inputs a valid index representing a machine.
+
+        Args:
+            machine_list: list of machines available to the user.
+        """
+
+        print("Select the index of the machine you want to subscribe data from:")
+        try:
+            machine_number = int(input())
+            while not machine_number >= 0 or not machine_number < len(machine_list):
+                print("The number inserted does not match a machine, try again:")
+                machine_number = int(input())
+            self.subscribed_machine = machine_list[machine_number]
+        except ValueError:
+            print("Incorrect value.")
+            self.select_machine(machine_list)
+
     def run(self):
         """
-        Function that contains all of the prompts necessary to establish a connection and subscription.
+        Function that contains all the prompts necessary to establish a connection and subscription.
         """
         token = self.get_token()
         machine_list = self.get_machines(token['access_token'])
@@ -224,13 +232,7 @@ class Subscriber(threading.Thread):
         for i, machine in enumerate(machine_list):
             print(f"{str(i)} - {machine['clientDescription']} ({machine['oaiboxType']}) [{machine['id']}]")
 
-        print("Select the index of the machine you want to subscribe data from:")
-        machine_to_subscribe = int(input())
-        while not machine_to_subscribe >= 0 or not machine_to_subscribe < len(machine_list):
-            print("The number inserted does not match a machine, try again:")
-            machine_to_subscribe = int(input())
-
-        self.subscribed_machine = machine_list[machine_to_subscribe]
+        self.select_machine(machine_list)
 
         print("Would you like to save the data to a file? (Y/N):")
         want_to_save = input().lower()
@@ -245,8 +247,7 @@ class Subscriber(threading.Thread):
 
         self.client = self.conn(token)
         while not self.client.connected:
-            print("not yet")
-            time.sleep(1)
+            continue
         self.connected = True
 
         while True:
@@ -270,30 +271,28 @@ class Subscriber(threading.Thread):
                     timestamps.append(telem['timestamp'])
             telem_df = pd.json_normalize(telems_list).set_axis(timestamps, axis='index')
             telem_df.to_csv(f"{os.getcwd()}/output/{str(int(time.time()))}.{self.subscribed_machine['id']}.csv")
-            print(f"File saved as {str(int(time.time()))}.{self.subscribed_machine['id']}.csv in data directory!")
+            print(f"\nFile saved as {str(int(time.time()))}.{self.subscribed_machine['id']}.csv in output directory!")
         print("Job done.")
 
 
 if __name__ == "__main__":
 
+    data = SubscriberData()
+    sub = Subscriber(data)
     try:
-        data = SubscriberData()
-        sub = Subscriber(data)
+        sub.setDaemon(True)
         sub.start()
         while not sub.connected:
             continue
         if sub.graph_wanted:
             matplotlib.use('Qt5Agg')  # Backend GUI (different OS might require a change.)
             graph = LivePlot(data)
+            graph.setDaemon(True)
             graph.start()
         while True:
             continue
     except (KeyboardInterrupt, SystemExit):
-        if sub.is_alive():
-            sub.quit()
-            sub.join()
-        if graph.is_alive():
-            graph.quit()
-            graph.join()
-        sys.exit()
+        sub.quit()
+        exit()
+
 
