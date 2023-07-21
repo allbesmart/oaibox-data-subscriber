@@ -107,7 +107,6 @@ class Subscriber(threading.Thread):
         self.connected = False
         self.file_name = None
         self.file_wanted = False
-        self.temp_file_ready = False
         self.graph_wanted = False
 
     def request_credentials(self):
@@ -256,7 +255,7 @@ class Subscriber(threading.Thread):
 
         if want_to_save == 'y':
             self.file_wanted = True
-            self.file_name = f"./output/{str(int(time.time()))}.{self.subscribed_machine['id']}.csv"
+            self.file_name = f"{os.getcwd()}/output/{str(int(time.time()))}.{self.subscribed_machine['id']}.csv"
             telem_file = open(self.file_name, 'a')
             telem_file.close()
         else:
@@ -278,7 +277,7 @@ class Subscriber(threading.Thread):
         """
         self.client.disconnect()
         if self.file_wanted:
-            print(f"\nFile saved as {str(int(time.time()))}.{self.subscribed_machine['id']}.csv in output directory!")
+            print(f"\nFile saved as {self.file_name}!")
         print("\nJob done.")
 
 
