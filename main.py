@@ -67,12 +67,11 @@ class LivePlot(threading.Thread):
                 while len(ues) > len(xs):
                     xs.append([])
                     ys.append([])
+                self.axis.clear()
                 for i in range(len(ues)):
-                    self.axis.clear()
                     xs[i].append(int(telem['timestamp']))
                     ys[i].append(int(ues[i]['rsrp']))
                     self.axis.plot(xs[i], ys[i], label="rnti:" + ues[i]['rnti'])
-            plt.xticks(rotation=45, ha="right")
             plt.legend()
 
 
@@ -175,6 +174,7 @@ class Subscriber(threading.Thread):
         """
         telem = json.loads(frame.body)
         self.sub_data.data.append(telem)
+        print('.', end='')
 
     def conn(self, token):
         """
@@ -249,7 +249,8 @@ class Subscriber(threading.Thread):
         while not self.client.connected:
             continue
         self.connected = True
-
+        print("Connected successfully!")
+        print("Gathering Data", end='')
         while True:
             if self.client.connected:
                 continue
@@ -272,7 +273,7 @@ class Subscriber(threading.Thread):
             telem_df = pd.json_normalize(telems_list).set_axis(timestamps, axis='index')
             telem_df.to_csv(f"{os.getcwd()}/output/{str(int(time.time()))}.{self.subscribed_machine['id']}.csv")
             print(f"\nFile saved as {str(int(time.time()))}.{self.subscribed_machine['id']}.csv in output directory!")
-        print("Job done.")
+        print("\nJob done.")
 
 
 if __name__ == "__main__":
@@ -285,7 +286,7 @@ if __name__ == "__main__":
         while not sub.connected:
             continue
         if sub.graph_wanted:
-            matplotlib.use('Qt5Agg')  # Backend GUI (different OS might require a change.)
+            matplotlib.use('QtAgg')  # Backend GUI (different OS might require a change.)
             graph = LivePlot(data)
             graph.setDaemon(True)
             graph.start()

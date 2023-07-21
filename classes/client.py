@@ -60,8 +60,6 @@ class Client:
         _results = []
         if frame.command == "CONNECTED":
             self.connected = True
-            print("Connected successfully!")
-            print("Getting data", end='')
             logging.debug("connected to server " + self.url)
             if self._connectCallback is not None:
                 _results.append(self._connectCallback(frame))
@@ -72,7 +70,6 @@ class Client:
             if subscription in self.subscriptions:
                 onreceive = self.subscriptions[subscription]
                 messageID = frame.headers['message-id']
-                print('.', end='')
 
                 def ack(headers):
                     if headers is None:
