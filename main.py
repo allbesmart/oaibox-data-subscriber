@@ -1,3 +1,5 @@
+import csv
+
 import maskpass
 import json
 import threading
@@ -9,7 +11,6 @@ import os
 from dotenv import load_dotenv
 from keycloak import KeycloakOpenID
 from classes.client import Client
-import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -104,7 +105,9 @@ class Subscriber(threading.Thread):
         self.client = None
         self.sub_data = sub_data
         self.connected = False
+        self.file_name = None
         self.file_wanted = False
+        self.temp_file_ready = False
         self.graph_wanted = False
 
     def request_credentials(self):
@@ -173,7 +176,18 @@ class Subscriber(threading.Thread):
             frame: object containing message output from the subscription to the message broker.
         """
         telem = json.loads(frame.body)
-        self.sub_data.data.append(telem)
+        if self.file_wanted:
+            temp_file = open(self.file_name, 'a', newline='')
+            if telem['ues']:
+                telems_list = []
+                for ue in telem['ues']:
+                    telems_list.append(ue)
+                timestamp = telem['timestamp']
+                write = csv.writer(temp_file)
+                write.writerow([timestamp, telems_list])
+                temp_file.close()
+        elif self.graph_wanted:
+            self.sub_data.data.append(telem)
         print('.', end='')
 
     def conn(self, token):
@@ -242,6 +256,9 @@ class Subscriber(threading.Thread):
 
         if want_to_save == 'y':
             self.file_wanted = True
+            self.file_name = f"./output/{str(int(time.time()))}.{self.subscribed_machine['id']}.csv"
+            telem_file = open(self.file_name, 'a')
+            telem_file.close()
         else:
             self.graph_wanted = True
 
@@ -261,17 +278,6 @@ class Subscriber(threading.Thread):
         """
         self.client.disconnect()
         if self.file_wanted:
-            telems_list = []
-            timestamps = []
-            for telem in self.sub_data.data:
-                if telem['ues']:
-                    ue_list = []
-                    for ue in telem['ues']:
-                        ue_list.append(ue)
-                    telems_list.append(ue_list)
-                    timestamps.append(telem['timestamp'])
-            telem_df = pd.json_normalize(telems_list).set_axis(timestamps, axis='index')
-            telem_df.to_csv(f"{os.getcwd()}/output/{str(int(time.time()))}.{self.subscribed_machine['id']}.csv")
             print(f"\nFile saved as {str(int(time.time()))}.{self.subscribed_machine['id']}.csv in output directory!")
         print("\nJob done.")
 
