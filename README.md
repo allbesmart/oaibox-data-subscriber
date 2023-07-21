@@ -62,7 +62,7 @@ After a correct index is input _(let's say '1')_, there will be one final prompt
 ```
 Would you like to save the data to a file? (Y/N):
 ```
-&emsp;***4.1.*** If 'y' is selected, the data will begin recording, and once the user terminates the program by pressing CTRL+C, the data accumulated will be stored in a CSV file.
+&emsp;***4.1.*** If 'y' is selected, the data will begin recording, and will be stored in a CSV file while the program is running.
 
 &emsp;&emsp;*Note:* A sample of the data file stored can be checked here: [Sample.csv](output/sample.csv)
 
